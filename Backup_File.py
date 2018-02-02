@@ -10,8 +10,8 @@ class Backup_File:
         self.filename = '.backup.json'
         self.dir_path = os.getcwd() + '/'
         self.backup = {
-            'single_files': [],
-            'folders': [],
+            'File': [],
+            'Folder': [],
             'ignore': []
         }
 
@@ -51,7 +51,7 @@ class Backup_File:
         return False
 
     def copy_files(self):
-        for files in self.backup['single_files'] + self.backup['folders']:
+        for files in self.backup['File'] + self.backup['Folder']:
 
             timestamp = os.stat(files['path']).st_mtime
             if files['name'] not in self.backup['ignore'] and \
@@ -77,13 +77,13 @@ class Backup_File:
         file_list = list()
 
         for file_path in files:
-            self.backup['single_files'].append({
+            self.backup['File'].append({
                 'name': file_path.split('/')[-1],
                 'path': file_path
             })
 
     def add_folder(self, folder):
-        self.backup['folders'].append({
+        self.backup['Folder'].append({
             'name': folder.split('/')[-1],
             'path': folder
         })
@@ -101,6 +101,12 @@ class Backup_File:
             self.open_file()
         else:
             print('You need to create a configuration first!')
+
+    def delete_from_backup(self, file_path, file_type):
+        for files in self.backup[file_type]:
+            if file_path == files['path']:
+                self.backup[file_type].remove(files)
+        self.save_settings()
 
 
 if __name__ == "__main__":
