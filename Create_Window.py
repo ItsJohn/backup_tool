@@ -28,7 +28,7 @@ class Create_Window:
             self.f1, text='Pick Files', command=self.open_file_dialogue)
 
         self.save_button = ttk.Button(
-            self.f1, text="Save Config", command=self.bf.save_settings)
+            self.f1, text="Save Config", command=self.bf.copy_files)
         self.run_button = ttk.Button(
             self.f1, text="Run Backup", command=self.bf.run_setup)
 

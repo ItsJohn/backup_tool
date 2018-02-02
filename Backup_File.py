@@ -2,6 +2,7 @@ from shutil import copyfile
 from distutils.dir_util import copy_tree
 import os
 import json
+from pathlib import Path
 
 
 class Backup_File:
@@ -14,14 +15,47 @@ class Backup_File:
             'ignore': []
         }
 
+    def check_empty_configuration(self):
+        """
+        Description:
+            Checks if the self.backup variable is an empty configuration.
+        Returns:
+            <Bool> True if the config is empty and False if it has contents
+        """
+        for config in self.backup:
+            if self.backup[config] != []:
+                return False
+        return True
+
+    def check_modify_time(self, files, timestamp):
+        """
+        Description:
+            Checks if there is a newer version of the file to be backed up
+        Args:
+            files <dict>: The file configuration in self.backup
+                e.g {
+                    'name': 'file.txt',
+                    'path': '/Users/username/Desktop/file.txt',
+                    'last_modified': 1517168935.533991
+                }
+            timestamp <float/int>: the timestamp of the file to be backup
+        Returns:
+            <Bool> True if the file should be copied or False if not
+        """
+        if 'last_modified' in files:
+            if files['last_modified'] < timestamp:
+                files['last_modified'] = timestamp
+                return True
+        else:
+            return True
+        return False
+
     def copy_files(self):
-        # TODO: Add last modified into json here
         for files in self.backup['single_files'] + self.backup['folders']:
 
-            last_modified = os.stat(files['path']).st_mtime
-
+            timestamp = os.stat(files['path']).st_mtime
             if files['name'] not in self.backup['ignore'] and \
-               files['last_modified'] < last_modified:
+               self.check_modify_time(files, timestamp):
 
                 if os.path.isfile(files['path']):
                     copyfile(files['path'], self.dir_path + files['name'])
@@ -32,6 +66,7 @@ class Backup_File:
                     files['name'], self.dir_path))
             else:
                 print('{} wasn\'t copied'.format(files['name']))
+        self.save_settings()
 
     def open_file(self):
         with open(self.filename, 'r') as fh:
@@ -44,25 +79,28 @@ class Backup_File:
         for file_path in files:
             self.backup['single_files'].append({
                 'name': file_path.split('/')[-1],
-                'path': file_path,
-                'last_modified': os.stat(file_path).st_mtime
+                'path': file_path
             })
 
     def add_folder(self, folder):
         self.backup['folders'].append({
             'name': folder.split('/')[-1],
-            'path': folder,
-            'last_modified': os.stat(folder).st_mtime
+            'path': folder
         })
 
     def save_settings(self):
         with open(self.filename, 'w') as fh:
             json.dump(self.backup, fh)
-        self.copy_files()
+        print('Config file created')
 
     def run_setup(self):
-        if os.path.isfile(self.filename):
+        filename = Path(self.filename)
+        if not self.check_empty_configuration():
+            self.copy_files()
+        elif filename.exists():
             self.open_file()
+        else:
+            print('You need to create a configuration first!')
 
 
 if __name__ == "__main__":

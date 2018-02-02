@@ -100,5 +100,8 @@ ENV/
 # mypy
 .mypy_cache/
 
+# Project Files
+.backup.json
+
 # Mac Files
 .DS_Store

@@ -4,7 +4,9 @@ This tool allows the user to select files and folders to backup to the location 
 To run the program: `python3 gui.py`
 
 These are the features to come to:
-* Get the copy files method to adjust the last_modified field in the JSON
 * Add an ignore files button
 * Get the progress bar to work
 * Add a feature to choose the backup location (search for last part of path if not found)
+* Add a box to show what files are to be backed up
+* Remove prints in the code and replace with labels on gui
+* Disable buttons when doing something
