@@ -69,20 +69,30 @@ class Create_Window:
 
     def open_file_dialogue(self):
         files = filedialog.askopenfilenames()
-        self.add_to_tree(files, 'File')
+        self.add_to_tree(files)
         self.bf.add_files(files)
 
     def open_folder_dialogue(self):
         folder = filedialog.askdirectory()
-        self.add_to_tree([folder], 'Folder')
+        self.add_to_tree([folder])
         self.bf.add_folder(folder)
 
     def setup_tree(self):
         for column in self.tree_column_names:
             self.backup_tree.heading(column, text=column)
+        file_contents = self.bf.get_config_file_contents()
+        if not self.bf.check_empty_configuration():
+            files = list()
+            for content in file_contents['File'] + file_contents['Folder']:
+                files.append(content['path'])
+            self.add_to_tree(files)
 
-    def add_to_tree(self, files, file_type):
+    def add_to_tree(self, files):
         for file_path in files:
+            if os.path.isdir(file_path):
+                file_type = 'Folder'
+            else:
+                file_type = 'File'
             filename = file_path.split('/')[-1]
             size = os.path.getsize(file_path)
             self.backup_tree.insert('', 'end', values=(

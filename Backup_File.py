@@ -71,7 +71,7 @@ class Backup_File:
     def open_file(self):
         with open(self.filename, 'r') as fh:
             self.backup = json.load(fh)
-        self.copy_files()
+        # self.copy_files()
 
     def add_files(self, files):
         file_list = list()
@@ -108,6 +108,9 @@ class Backup_File:
                 self.backup[file_type].remove(files)
         self.save_settings()
 
+    def get_config_file_contents(self):
+        self.open_file()
+        return self.backup
 
 if __name__ == "__main__":
     bf = Backup_File()
