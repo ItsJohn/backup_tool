@@ -8,12 +8,29 @@ from pathlib import Path
 class Backup_File:
     def __init__(self):
         self.filename = '.backup.json'
-        self.dir_path = os.getcwd() + '/'
-        self.backup = {
-            'File': [],
-            'Folder': [],
-            'ignore': []
-        }
+        self.open_file()
+        if self.check_empty_configuration():
+            self.backup = {
+                'File': [],
+                'Folder': [],
+                'ignore': []
+            }
+        self.set_backup_location()
+
+    def add_files(self, files):
+        file_list = list()
+
+        for file_path in files:
+            self.backup['File'].append({
+                'name': file_path.split('/')[-1],
+                'path': file_path
+            })
+
+    def add_folder(self, folder):
+        self.backup['Folder'].append({
+            'name': folder.split('/')[-1],
+            'path': folder
+        })
 
     def check_empty_configuration(self):
         """
@@ -68,30 +85,19 @@ class Backup_File:
                 print('{} wasn\'t copied'.format(files['name']))
         self.save_settings()
 
+    def delete_from_backup(self, file_path, file_type):
+        for files in self.backup[file_type]:
+            if file_path == files['path']:
+                self.backup[file_type].remove(files)
+        self.save_settings()
+
+    def get_config_file_contents(self):
+        self.open_file()
+        return self.backup
+
     def open_file(self):
         with open(self.filename, 'r') as fh:
             self.backup = json.load(fh)
-        # self.copy_files()
-
-    def add_files(self, files):
-        file_list = list()
-
-        for file_path in files:
-            self.backup['File'].append({
-                'name': file_path.split('/')[-1],
-                'path': file_path
-            })
-
-    def add_folder(self, folder):
-        self.backup['Folder'].append({
-            'name': folder.split('/')[-1],
-            'path': folder
-        })
-
-    def save_settings(self):
-        with open(self.filename, 'w') as fh:
-            json.dump(self.backup, fh)
-        print('Config file created')
 
     def run_setup(self):
         filename = Path(self.filename)
@@ -102,15 +108,22 @@ class Backup_File:
         else:
             print('You need to create a configuration first!')
 
-    def delete_from_backup(self, file_path, file_type):
-        for files in self.backup[file_type]:
-            if file_path == files['path']:
-                self.backup[file_type].remove(files)
-        self.save_settings()
+    def set_backup_location(self, location=None):
+        if location:
+            self.backup['backup_location'] = self.dir_path = '{}/'.format(
+                location)
+            self.save_settings()
+        else:
+            self.dir_path = '{}/'.format(os.getcwd())
+            if 'backup_location' in self.backup:
+                if os.path.exists(self.backup['backup_location']):
+                    self.dir_path = self.backup['backup_location']
 
-    def get_config_file_contents(self):
-        self.open_file()
-        return self.backup
+    def save_settings(self):
+        with open(self.filename, 'w') as fh:
+            json.dump(self.backup, fh)
+        print('Config file created')
+
 
 if __name__ == "__main__":
     bf = Backup_File()

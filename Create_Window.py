@@ -32,6 +32,12 @@ class Create_Window:
         self.run_button = ttk.Button(
             self.f1, text="Run Backup", command=self.bf.run_setup)
 
+        backup_text = "Backup location: {}".format(self.bf.dir_path)
+        self.backup_loc_label = ttk.Label(self.f1, text=backup_text)
+        self.backup_loc_button = ttk.Button(
+            self.f1, text="Select backup location",
+            command=self.select_backup_location)
+
         # TODO: Get this working
         self.progress_bar = ttk.Progressbar(
             self.f1, orient=HORIZONTAL, length=200, mode='determinate')
@@ -53,9 +59,11 @@ class Create_Window:
         self.file_button.grid(column=1, row=3, columnspan=2, pady=5, padx=5)
         self.save_button.grid(column=1, row=4, pady=5, padx=5)
         self.run_button.grid(column=2, row=4, pady=5, padx=5)
-        self.progress_bar.grid(column=1, row=5, columnspan=2, pady=5)
-        self.backup_tree.grid(column=1, row=6, columnspan=2, pady=5)
-        self.delete_button.grid(column=1, row=7, columnspan=2, pady=5)
+        self.backup_loc_label.grid(column=1, row=5, columnspan=2, pady=5)
+        self.backup_loc_button.grid(column=1, row=6, columnspan=2, pady=5)
+        self.progress_bar.grid(column=1, row=7, columnspan=2, pady=5)
+        self.backup_tree.grid(column=1, row=8, columnspan=2, pady=5)
+        self.delete_button.grid(column=1, row=9, columnspan=2, pady=5)
 
         # added resizing configs
         self.parent.columnconfigure(0, weight=1)
@@ -105,3 +113,9 @@ class Create_Window:
                 tree_id)['values']
             self.bf.delete_from_backup(file_path, file_type)
             self.backup_tree.delete(tree_id)
+
+    def select_backup_location(self):
+        backup_location = filedialog.askdirectory()
+        self.bf.set_backup_location(backup_location)
+        self.backup_loc_label['text'] = "Backup location: {}/".format(
+            backup_location)
