@@ -8,8 +8,9 @@ from pathlib import Path
 class Backup_File:
     def __init__(self):
         self.filename = '.backup.json'
-        self.open_file()
-        if self.check_empty_configuration():
+        try:
+            self.open_file()
+        except FileNotFoundError:
             self.backup = {
                 'File': [],
                 'Folder': [],
@@ -17,20 +18,22 @@ class Backup_File:
             }
         self.set_backup_location()
 
-    def add_files(self, files):
-        file_list = list()
+    def add_items_to_backup(self, file_path):
+        if os.path.isdir(file_path):
+            file_type = 'Folder'
+        else:
+            file_type = 'File'
 
-        for file_path in files:
-            self.backup['File'].append({
-                'name': file_path.split('/')[-1],
-                'path': file_path
-            })
+        new_file = {
+            'name': file_path.split('/')[-1],
+            'path': file_path
+        }
 
-    def add_folder(self, folder):
-        self.backup['Folder'].append({
-            'name': folder.split('/')[-1],
-            'path': folder
-        })
+        if new_file not in self.backup[file_type]:
+            self.backup[file_type].append(new_file)
+            self.save_settings()
+            return True
+        return False
 
     def check_empty_configuration(self):
         """
@@ -44,12 +47,12 @@ class Backup_File:
                 return False
         return True
 
-    def check_modify_time(self, files, timestamp):
+    def check_modify_time(self, file_info, timestamp):
         """
         Description:
             Checks if there is a newer version of the file to be backed up
         Args:
-            files <dict>: The file configuration in self.backup
+            file_info <dict>: The file configuration in self.backup
                 e.g {
                     'name': 'file.txt',
                     'path': '/Users/username/Desktop/file.txt',
@@ -59,30 +62,32 @@ class Backup_File:
         Returns:
             <Bool> True if the file should be copied or False if not
         """
-        if 'last_modified' in files:
-            if files['last_modified'] < timestamp:
-                files['last_modified'] = timestamp
+        if 'last_modified' in file_info:
+            if file_info['last_modified'] < timestamp:
                 return True
         else:
             return True
         return False
 
     def copy_files(self):
-        for files in self.backup['File'] + self.backup['Folder']:
+        for file_info in self.backup['File'] + self.backup['Folder']:
 
-            timestamp = os.stat(files['path']).st_mtime
-            if files['name'] not in self.backup['ignore'] and \
-               self.check_modify_time(files, timestamp):
+            timestamp = os.stat(file_info['path']).st_mtime
+            if file_info['path'] not in self.backup['ignore'] and \
+               self.check_modify_time(file_info, timestamp):
 
-                if os.path.isfile(files['path']):
-                    copyfile(files['path'], self.dir_path + files['name'])
+                if os.path.isfile(file_info['path']):
+                    copyfile(
+                        file_info['path'], self.dir_path + file_info['name'])
                 else:
-                    copy_tree(files['path'], self.dir_path + files['name'])
+                    copy_tree(
+                        file_info['path'], self.dir_path + file_info['name'])
+                file_info['last_modified'] = timestamp
 
                 print('{} was copied to {}'.format(
-                    files['name'], self.dir_path))
+                    file_info['name'], self.dir_path))
             else:
-                print('{} wasn\'t copied'.format(files['name']))
+                print('{} wasn\'t copied'.format(file_info['name']))
         self.save_settings()
 
     def delete_from_backup(self, file_path, file_type):
@@ -91,9 +96,13 @@ class Backup_File:
                 self.backup[file_type].remove(files)
         self.save_settings()
 
-    def get_config_file_contents(self):
-        self.open_file()
+    def get_config_contents(self):
         return self.backup
+
+    def ignore_files(self, item):
+        if item not in self.backup['ignore']:
+            self.backup['ignore'].append(item)
+            self.save_settings()
 
     def open_file(self):
         with open(self.filename, 'r') as fh:
